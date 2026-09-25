@@ -502,7 +502,6 @@ def add_cluster_label(data_loader, n_segments, compactness, cluster_type='slic',
     Due to preprocessing the cluster_set including the index that correspond to the single graph
     
     for a batch of graph, we need to add the time label in each graph manually, add graph.time[mask].min
-    https://vscode.dev/github/guangzhao27/SOMA_INR/blob/master/train_utility_sampling/train_utility.py#L68
     '''
     for i, graph in enumerate(data_loader.dataset):
         if cluster_dim == '2d':
@@ -1198,10 +1197,10 @@ class INRSingle2dAdaptiveSamplerWrapper(InrSamplerWrapper):
 
 class INRSingle3dSamplerWrapper(InrSamplerWrapper):
     """
-    Sampler for single-volume 3D datasets (e.g. SOMA ocean data). Mirrors
-    INRSingle2dSamplerWrapper, but coordinates are 3-column (x, y, z) and the
-    coordinate grid is not fully dense (an ocean/land mask leaves gaps inside the
-    bounding box), so grid-based sample types resolve candidate voxels through an
+    Sampler for single-volume 3D datasets (e.g. NS3D, PoolBoiling3D). Mirrors
+    INRSingle2dSamplerWrapper, but coordinates are 3-column (x, y, z), and the
+    coordinate grid is not assumed to be fully dense (a mask may leave gaps inside
+    the bounding box), so grid-based sample types resolve candidate voxels through an
     index-grid lookup (build_3d_index_grid) instead of a dense flatten-index formula.
     """
     def __init__(
@@ -1263,7 +1262,7 @@ class INRSingle3dSamplerWrapper(InrSamplerWrapper):
     def _build_stratified_partition(self, graph: Data) -> None:
         """Build the fixed voxel grid once; cache bounds, geometric volumes and valid counts.
 
-        Volumes may be non-dense (SOMA's land mask), so the number of *valid* voxels N_h
+        Volumes may be non-dense (a mask may leave gaps), so the number of *valid* voxels N_h
         differs from the geometric box volume. Both are needed: N_h drives the allocation
         and the weights, while the volume converts a valid-point budget into the number of
         geometric draws to make (draws landing on a hole are discarded).
@@ -1484,8 +1483,8 @@ _VOLUMETRIC_MODE_TO_ESTIMATOR = {
 
 class INRSingle3dAdaptiveSamplerWrapper(InrSamplerWrapper):
     """
-    Octree-based adaptive sampler for single-volume 3D datasets (e.g. SOMA ocean
-    data). 3D analog of INRSingle2dAdaptiveSamplerWrapper: mirrors its cell
+    Octree-based adaptive sampler for single-volume 3D datasets (e.g. NS3D,
+    PoolBoiling3D). 3D analog of INRSingle2dAdaptiveSamplerWrapper: mirrors its cell
     caching/topk/weight-mode logic almost exactly, differing only in how the
     partition is built (octree instead of quadtree) and how sampled voxel
     coordinates are resolved to dataset indices (index-grid lookup, since the
@@ -2611,7 +2610,7 @@ def create_inr_sampler(cfg, inr, graph, current_date_str, run_name, device='cuda
 
     save_path = f'./sampled_frames/{current_date_str + run_name}'
 
-    # Volumetric (3D) datasets (e.g. SOMA) are not fully dense, so grid_shape is
+    # Volumetric (3D) datasets are not assumed to be fully dense, so grid_shape is
     # derived per-axis rather than assuming a single square image_width.
     if graph.cor.shape[1] == 3:
         grid_shape = tuple((graph.cor.max(dim=0)[0] + 1).tolist())

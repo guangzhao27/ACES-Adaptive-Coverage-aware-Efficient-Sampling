@@ -514,7 +514,7 @@ def single_image_step(
             # 3D coords (volumetric / spatio-temporal): PSNR is layout-free
             # (flat MSE + data range), and 2D SSIM isn't defined for these
             # coords. Compute PSNR on the flat tensors, skip SSIM. Works for
-            # both dense (x, y, t) cubes and sparse masked volumes (SOMA).
+            # both dense (x, y, t) cubes and sparse masked volumes.
             psnr_score = psnr(features_recon, features)
             ssim_score = None
         else:

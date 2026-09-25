@@ -9,6 +9,8 @@ adaptive spatial partitioning (a quadtree/octree refined by per-region
 residual variance) with residual-aware, bias-controlled importance weighting,
 to balance domain coverage against focused refinement of high-error regions.
 
+![ACES method diagram](assets/method-diagram.png)
+
 ## Installation
 
 ```bash
@@ -25,12 +27,14 @@ is incompatible with Python 3.12+.
 Scripts expect a `DATA_ROOT` directory containing:
 - `NS2d/ns_data_res2048_re10000_7.npy` — 2D Navier-Stokes vorticity fields at
   Re=10,000 (used for both the NS2D snapshot experiments and the NS3D joint
-  spatiotemporal experiment).
-- `PoolBoiling-SubCooled-FC72-2D/` — BubbleML pool-boiling HDF5 files (used
-  for both PoolBoiling2D and PoolBoiling3D).
+  spatiotemporal experiment). Generated from
+  [7tl7qns7ch/PINN4___](https://github.com/7tl7qns7ch/PINN4___).
+- `PoolBoiling-SubCooled-FC72-2D/` — pool-boiling HDF5 files from
+  [BubbleML](https://github.com/HPCForge/BubbleML) (used for both
+  PoolBoiling2D and PoolBoiling3D).
 
-These are not redistributed with this repository; contact the authors or see
-the paper's data availability statement for access.
+These are not redistributed with this repository; see the source repositories
+above, or the paper's data availability statement, for access.
 
 ## Reproducing the paper's results
 
@@ -47,7 +51,6 @@ export WANDB_PROJECT=aces-inr-sampling            # optional
 |---|---|---|
 | `script/run_ns2d.sh` | Figure 3a (NS2D efficiency) | Uniform, INT, EVOS, Fixed Stratified, ACES |
 | `script/run_poolboiling2d.sh` | Figure 3b (PoolBoiling2D efficiency) | Uniform, INT, EVOS, Fixed Stratified, ACES |
-| `script/run_poolboiling2d_ablation.sh` | Figure 4 (component ablation) | Uniform, Fixed + Weighting, Partition Only (Unbiased), ACES |
 | `script/run_ns3d.sh` | Table 1, NS3D row (joint spatiotemporal) | INT, Uniform, Fixed Stratified, ACES |
 | `script/run_poolboiling3d.sh` | Table 1, PoolBoiling3D row (joint spatiotemporal) | INT, Uniform, Fixed Stratified, ACES |
 

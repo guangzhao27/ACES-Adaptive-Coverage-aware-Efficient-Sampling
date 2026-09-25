@@ -1,5 +1,4 @@
 import glob
-import math
 import os
 from collections import defaultdict
 
@@ -599,8 +598,7 @@ class GraphSpatioTemporalVolume3D(Dataset):
     """
     Treat a 2D-spatial + 1D-temporal field as a single 3D (x, y, t) volume.
 
-    Unlike the single-frame 2D flow (which trains one INR per time frame) and
-    unlike SOMA (spatial x,y,z volume with a separate repeated time axis), here
+    Unlike the single-frame 2D flow (which trains one INR per time frame), here
     the temporal axis IS the third coordinate: the whole (H, W, T) block is one
     cube whose voxels are (x, y, t) points. This makes the octree-based
     `3d_grid_adaptive` sampler split the cube into 8 sub-cubes along space AND

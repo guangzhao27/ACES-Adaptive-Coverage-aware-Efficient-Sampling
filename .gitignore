@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 *.png
+!assets/*.png
 *.npy
 *.log
 *.json

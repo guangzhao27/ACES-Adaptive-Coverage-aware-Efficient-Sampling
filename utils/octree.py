@@ -95,7 +95,7 @@ class HierarchicalVoxelGrid:
     Manages a hierarchical grid of voxel cells that can be dynamically subdivided.
 
     Unlike HierarchicalImageGrid, grid_shape is a (Dx, Dy, Dz) tuple rather than a
-    single square width — 3D volumetric datasets (e.g. SOMA ocean data) are not cubic.
+    single square width — 3D volumetric datasets (e.g. NS3D, PoolBoiling3D) are not cubic.
     """
     def __init__(self, grid_shape, initial_grid_size=4):
         self.grid_shape = tuple(grid_shape)

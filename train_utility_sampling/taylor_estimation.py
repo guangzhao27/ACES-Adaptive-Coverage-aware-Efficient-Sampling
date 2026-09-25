@@ -652,9 +652,9 @@ def cell_sqrt_loss_variance_estimate_with_random_sampling(cell_cor_range, graph,
 # ============================================================================
 # Section 3b: Volumetric (3D) Cell-Utility Estimators
 # ============================================================================
-# Unlike the 2D NS/Burgers/PoolBoiling grids, volumetric datasets (e.g. SOMA ocean
-# data) are not fully dense: an ocean/land mask leaves gaps inside the coordinate
-# bounding box, so graph.feat/graph.space_emb cannot be reshaped directly to
+# Unlike the 2D NS/PoolBoiling grids, volumetric datasets are not assumed to be
+# fully dense: a mask may leave gaps inside the coordinate bounding box, so
+# graph.feat/graph.space_emb cannot be reshaped directly to
 # (Dx, Dy, Dz, ...) via .view() like the 2D estimators above. Instead we scatter
 # node indices into a dense (Dx, Dy, Dz) lookup grid (-1 = masked-out voxel) and
 # skip masked-out candidates when sampling inside a cell.
