@@ -1,0 +1,211 @@
+defaults:
+  - _self_
+  - data: null
+  - optim: null
+  - inr: null
+  - wandb: null
+
+hydra:
+  job:
+    chdir: False
+
+#continue:
+saved_checkpoint : False
+checkpoint_path :
+# checkpoint_mode controls what gets saved to Results/checkpoints/ and ./checkpoints/
+#   none  – no checkpoints saved (default for sweep runs)
+#   final – only the final model after training completes
+#   all   – eval checkpoint every evo_every_epochs steps + best + final
+checkpoint_mode: "none"
+save_sampled_frames: True       # Whether to save sampled frames (visualizations)
+
+data:
+  data_path: "./data/NS2d/ns_mmap"
+  data_type: mmap
+  dataset_name: "NS"
+  # Supported dataset_name values:
+  #   NS            : 2D Navier-Stokes  -- data_path to .npy / ns_mmap / hdf5
+  #   PoolBoiling2D : pool-boiling CFD -- data_path = directory containing
+  #                                      Twall-*.hdf5 files, field_key defaults to
+  #                                      "temperature" with shape (T, H, W)
+  #   NS3D          : joint (x, y, t) Navier-Stokes volume -- data_path to the same
+  #                    .npy used for NS, stacked over volume_num_frames frames
+  #   PoolBoiling3D : joint (x, y, t) pool-boiling volume -- data_path to the
+  #                    PoolBoiling HDF5 directory, stacked over volume_num_frames frames
+  data_to_encode:
+  missing_rate:
+  ntrain : 
+  ntest : 
+  sub_from :
+  space_factor : 1 # space resolution
+  time_factor : 1
+  seed: 15
+  val_missing_rate: 0.0
+  sub_array_num: 1
+  split_ratios:
+    - 0.7
+    - 0.15
+    - 0.15
+  single_time_frame: 10
+  # PoolBoiling2D runtime options (used when dataset_name = PoolBoiling2D)
+  poolboiling_condition: 100   # default file selector: Twall-{condition}.hdf5
+  poolboiling_file:            # optional explicit file name, e.g. Twall-100.hdf5
+  poolboiling_key: temperature # HDF5 field key for supervision target
+  poolboiling_sample_idx: 0    # only used when selected field has shape [N, T, H, W]
+  # NS3D / PoolBoiling3D spatio-temporal (x, y, t) volume options
+  volume_time_start: 0         # index of first temporal frame to stack into the cube
+  volume_num_frames: 64        # number of consecutive frames along the t axis
+
+optim:
+  optimizer: adamw   # supported: adamw, sgd
+  batch_size: 32
+  batch_size_val: 
+  lr_inr : 0.000005
+  adamw_weight_decay: 0.0
+  sgd_momentum: 0.9
+  sgd_dampening: 0.0
+  sgd_weight_decay: 0.0
+  sgd_nesterov: False
+  lr_code : 0.01
+  meta_lr_code : 0.000005
+  weight_decay_code: 0
+  inner_steps : 3
+  epochs : 10000
+  evo_every_epochs: 100
+
+inr:
+  model_type : "siren"  # supported: siren, single_image_fourier_mlp
+  latent_dim : 256 # for siren  
+  depth : 5
+  hidden_dim : 256
+  w0 : 30.0
+  fourier_mapping_size: 256 # for single_image_fourier_mlp 
+  fourier_scale: 10.0
+  fourier_include_input: True
+  fourier_activation: "relu"
+  use_latent: True
+  modulate_scale: False
+  modulate_shift: True
+  hypernet_depth: 1
+  hypernet_width: 128
+  last_activation: 
+  loss_type: "mse"  # All below are for EVOS only
+  use_lr_scheduler: False
+  multi_data: False
+  signal_type: "image"
+  eval_lpips: False
+  # Check if redundant
+  # hidden_layers: 6
+  # hidden_features: 155
+  # first_omega: 30
+  # hidden_omega: 30
+  # first_bias_scale: None
+  # scale_req_grad: False
+  # N_freqs: 10
+  # scale: 30
+
+wandb:
+  use_wandb: False
+  project: "functa2functa"
+  name: 
+  id: 
+  sweep_id:
+
+sampling:
+  type: "random"
+  rate: 0.2
+  # loss_variance_score = Var(|error|)*N_k (the mode used by every reported paper
+  # result); loss_std_score = std(|error|)*N_k (matches Eq.19 of the paper exactly,
+  # but is not what any reported result was produced with). Other options:
+  # "gradient", "loss", "loss_no_sqrt", "loss_true", "loss_sqrt_no_area".
+  adaptive_mode: "loss"             # only used by sampling.type=2d_grid_adaptive/3d_grid_adaptive
+  adaptive_iterations: 8            # only used by sampling.type=2d_grid_adaptive/3d_grid_adaptive: octree/quadtree subdivision depth
+  adaptive_equal_cell_topk: False   # only used by 2d_grid_adaptive/3d_grid_adaptive: keep global top-k by prediction dif from sampled candidates
+  adaptive_equal_cell_topk_count_mode: "same"  # only used when adaptive_equal_cell_topk=True: "same" or "poisson"
+  adaptive_equal_cell_topk_weight_mode: "none" # only used when adaptive_equal_cell_topk=True: "none" or "unbiased_weight" or "loss_powered_weight"
+  power_for_loss_as_weight: 0.2 # only used when weight_mode="loss_powered_weight" (or equal_cell_topk_weight_mode="loss_powered_weight")
+  adaptive_weight_mode: "inverse_value"  # only used by 2d_grid_adaptive/3d_grid_adaptive: "none", "inverse_value", "unbiased_weight", "sampled_dif", "loss_powered_weight"
+  adaptive_weight_value_eps: 1e-6   # denominator clamp for inverse_value mode
+  adaptive_weight_clip_ratio: 10.0  # clip per-cell weights to median*ratio; <=0 disables clipping
+  adaptive_grid_update_interval: 100  # only used by sampling.type=2d_grid_adaptive
+  subdivision_percentage: 20.0        # only used by sampling.type=2d_grid_adaptive: % of leaf cells split per iteration
+  # How the adaptive samplers turn cell scores into per-cell sample counts.
+  #   min_one (default, published ACES behaviour) - reserve 1 sample per cell, Poisson the
+  #     rest. Guarantees every leaf is represented each step, but CANNOT honour a budget
+  #     smaller than the cell count: with n <= n_cells the batch becomes n_cells, ignoring
+  #     sampling.rate. Even inside the budget the reserve is costly (226 leaves against a
+  #     294-sample budget spends 77% of the budget on the reserve).
+  #   soft - floor the EXPECTED allocation instead: n~_h = max(n*v_h/sum(v), frac*n/H)
+  #     renormalised to sum to n (water-filling), then n_h ~ Poisson(n~_h). Honours the
+  #     budget exactly for any cell count, keeps coverage in expectation, and leaves the
+  #     score-driven share of the budget intact. Cells may draw zero on a given step, so
+  #     the weight modes divide by the expected allocation rather than the realised count.
+  # Changing this changes ACES's behaviour, so existing results are only comparable within
+  # one mode. Default is left at min_one so published numbers reproduce.
+  adaptive_count_floor_mode: "min_one"  # "min_one" or "soft"
+  adaptive_count_floor_frac: 0.1        # only used when mode="soft": floor as a fraction of n/H
+  adaptive_initial_grid_size: 8       # 3d_grid_adaptive: octree initial grid = size^3 leaf cells (lower it for very low sampling rates so initial cells stay << n_samples)
+  runtime_profile: True            # collect per-iteration runtime breakdown (forward/backward/sampling/partition-update)
+  use_weight_function: True          # only used by sampling.type=2d_grid_linear_weighted
+  fixed_cell_size: 32               # only used by sampling.type=2d_grid_fixed: cell edge length in pixels
+  k_per_cell: 1                     # only used by sampling.type=2d_grid_fixed: samples drawn per cell
+  # --- fixed-grid stratified sampling (sampling.type=2d_grid_stratified / 3d_grid_stratified) ---
+  # Textbook stratified sampling on a FIXED uniform grid; the unbiased baseline that
+  # isolates how much of ACES's gain comes from adaptive partitioning rather than from
+  # stratification + optimal allocation. Points are weighted N_h / n~_h (Hansen-Hurwitz),
+  # which makes the training loss an unbiased estimate of the full-grid mean loss.
+  # Keep the total cell count BELOW the per-step sample budget (n = rate * n_points),
+  # otherwise most cells sit at the allocation floor and Neyman has nothing to allocate.
+  stratified_allocation: "neyman"   # "proportional" (n~_h ∝ N_h) or "neyman" (n~_h ∝ N_h·σ_h)
+  stratified_n_bins: 16             # cells per axis; scalar, or a length-3 list for 3D volumes
+  stratified_min_alloc_frac: 0.1    # floor on n~_h as a fraction of the uniform share n/H;
+                                    # caps Horvitz-Thompson weight blow-up without adding bias
+  stratified_update_interval: 500   # epochs between σ_h re-estimates (2D 500, 3D 100 — matches ACES)
+  stratified_pilot_per_cell: 16     # pilot points per cell for σ_h; scoring only, never trained on
+  n_clusters_2d_start: 5
+  n_clusters_2d_end: 10
+  cluster_type: "slic"              # All below are for EVOS only
+  sample_num_schedular: "constant"  # "constant", "linear", "step", "cosine", "reverse-cosine"
+  lap_coff: 1e-5
+  crossover_method: "select"
+  use_laplace_epoch: 1500
+  mutation_method: "constant"       # "constant", "linear", "exp"
+  init_mutation_ratio: 0.5
+  end_mutation_ratio: 0.5
+  profile_interval_method: "lin_dec"    # "fixed", "lin_dec" 
+  init_interval: 100                    # 100
+  end_interval: 50                    #50
+  profile_guide: "value"            # "value", "diff_1"
+  save_dir: "./log"
+  tag: "exp"
+  up_folder_name: "debug"
+  debug: False
+  device: "cuda:0"
+  log_epoch: 500
+  snap_epoch: 5000
+  measure_dense_diff: False
+  mdd_interval: 1
+  measure_crossover_diff: False
+  measure_sample_diff: False
+  record_indices: False
+  dense_measure_psnr: False
+# data_folder=""
+
+transform:
+  transform: "min_max"
+  trans_shift: -0.5
+  trans_scale: 2.0
+  pn_cum: 0.5
+  pn_buffer: -1
+  box_shift: 0.1
+  pn_alpha: 0.01
+  pn_k: 256.0
+  pn_beta: 0.05
+  gamma_boundary: 5.0
+  gamma: 1.0
+  inverse: False
+  rpp: False
+                                    
+
+# sample type: random; NMT;
+          

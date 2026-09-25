@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.png
+*.npy
+*.log
+*.json
+*.out
+/data/*
+/checkpoints/*
+/outputs/*
+/wandb/*
+/sampled_frames/*
+**/.ipynb_checkpoints/**
