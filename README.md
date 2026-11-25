@@ -1,7 +1,7 @@
 # ACES: Adaptive Coverage-aware Efficient Sampling
 
-Official code for **"Efficient Neural Field Learning via Adaptive Coverage and
-Focused Sampling"** (NeurIPS 2026).
+Official code for [**"Efficient Neural Field Learning via Adaptive Coverage and
+Focused Sampling"**](https://arxiv.org/abs/2610.02410) (NeurIPS 2026).
 
 ACES is a region-level adaptive sampling framework for training implicit
 neural representations (INRs) on heterogeneous continuous fields. It combines
